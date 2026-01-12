@@ -1,13 +1,36 @@
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
+using VMS.Interview.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .WriteTo.Console();
+});
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var connectionString = builder.Configuration.GetConnectionString("Default");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'Default' is not configured.");
+}
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseNpgsql(connectionString);
+});
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -31,6 +54,8 @@ if (useHttpsRedirection)
 {
     app.UseHttpsRedirection();
 }
+
+app.UseSerilogRequestLogging();
 
 app.UseAuthorization();
 

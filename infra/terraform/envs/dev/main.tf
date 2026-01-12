@@ -1,0 +1,32 @@
+module "app" {
+  source = "../../modules/ecs_fargate"
+
+  region                 = var.region
+  app_name               = var.app_name
+  environment            = var.environment
+  vpc_cidr               = var.vpc_cidr
+  public_subnet_cidrs     = var.public_subnet_cidrs
+  azs                    = local.azs
+  container_port         = var.container_port
+  health_check_path      = var.health_check_path
+  db_subnet_cidrs         = var.db_subnet_cidrs
+  db_name                 = var.db_name
+  db_username             = var.db_username
+  db_password             = var.db_password
+  db_engine               = var.db_engine
+  db_engine_version       = var.db_engine_version
+  db_instance_class       = var.db_instance_class
+  db_allocated_storage    = var.db_allocated_storage
+  db_port                 = var.db_port
+  db_multi_az             = var.db_multi_az
+  db_backup_retention_days = var.db_backup_retention_days
+  db_skip_final_snapshot  = var.db_skip_final_snapshot
+  db_deletion_protection  = var.db_deletion_protection
+  db_publicly_accessible  = var.db_publicly_accessible
+  task_cpu               = var.task_cpu
+  task_memory            = var.task_memory
+  desired_count          = var.desired_count
+  image_tag              = var.image_tag
+  aspnetcore_environment = var.aspnetcore_environment
+  tags                   = local.tags
+}
