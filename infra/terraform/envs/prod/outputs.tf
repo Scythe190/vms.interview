@@ -1,7 +1,3 @@
-output "alb_dns_name" {
-  value = module.app.alb_dns_name
-}
-
 output "ecr_repository_url" {
   value = module.app.ecr_repository_url
 }
@@ -12,6 +8,10 @@ output "cluster_name" {
 
 output "service_name" {
   value = module.app.service_name
+}
+
+output "tasks_security_group_id" {
+  value = module.app.tasks_security_group_id
 }
 
 output "db_endpoint" {

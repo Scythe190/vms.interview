@@ -25,13 +25,16 @@ terraform plan
 terraform apply
 ```
 
-Outputs include the ALB DNS name and the ECR repository URL.
+Outputs include the ECR repository URL and the ECS service name.
 
 RDS is included in each environment. Provide the database password using an environment variable before running `plan` or `apply`:
 
 ```bash
 $env:TF_VAR_db_password = "your-strong-password"
 ```
+
+Note: This stack currently runs ECS tasks with public IPs and no load balancer (account restriction workaround).
+To reach the app, find the running task's public IP in the ECS console and hit `http://<public-ip>:8080/health`.
 
 ## GitHub Actions OIDC (for CD)
 

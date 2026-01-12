@@ -49,10 +49,16 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Ensure ECR repository exists
-        run: |
-          aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1 || \
-          aws ecr create-repository --repository-name "$ECR_REPOSITORY"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Terraform apply (ensure ECR)
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform apply -auto-approve -target=module.app.aws_ecr_repository.this
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -70,13 +76,6 @@ jobs:
             ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform init
-        working-directory: ${{ env.TF_DIR }}
-        run: terraform init -backend-config=backend.hcl
 
       - name: Terraform plan
         working-directory: ${{ env.TF_DIR }}
@@ -109,10 +108,16 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Ensure ECR repository exists
-        run: |
-          aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1 || \
-          aws ecr create-repository --repository-name "$ECR_REPOSITORY"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Terraform apply (ensure ECR)
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform apply -auto-approve -target=module.app.aws_ecr_repository.this
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -130,13 +135,6 @@ jobs:
             ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform init
-        working-directory: ${{ env.TF_DIR }}
-        run: terraform init -backend-config=backend.hcl
 
       - name: Terraform plan
         working-directory: ${{ env.TF_DIR }}

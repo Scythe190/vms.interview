@@ -1,8 +1,6 @@
 locals {
   name_prefix           = "${var.app_name}-${var.environment}"
   ecr_repository_name   = var.ecr_repository_name != "" ? var.ecr_repository_name : local.name_prefix
-  alb_name              = substr("${local.name_prefix}-alb", 0, 32)
-  target_group_name     = substr("${local.name_prefix}-tg", 0, 32)
   cluster_name          = "${local.name_prefix}-cluster"
   log_group_name        = "/ecs/${local.name_prefix}"
   task_execution_role   = "${local.name_prefix}-task-exec"
@@ -72,38 +70,16 @@ resource "aws_route_table_association" "db" {
   route_table_id = aws_route_table.db.id
 }
 
-resource "aws_security_group" "alb" {
-  name        = "${local.name_prefix}-alb-sg"
-  description = "ALB security group"
-  vpc_id      = aws_vpc.this.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = local.tags
-}
-
 resource "aws_security_group" "tasks" {
   name        = "${local.name_prefix}-tasks-sg"
   description = "ECS tasks security group"
   vpc_id      = aws_vpc.this.id
 
   ingress {
-    from_port       = var.container_port
-    to_port         = var.container_port
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+    from_port   = var.container_port
+    to_port     = var.container_port
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -178,45 +154,6 @@ resource "aws_secretsmanager_secret_version" "db_connection" {
   secret_string = local.db_connection_string
 }
 
-resource "aws_lb" "this" {
-  name               = local.alb_name
-  load_balancer_type = "application"
-  internal           = false
-  subnets            = aws_subnet.public[*].id
-  security_groups    = [aws_security_group.alb.id]
-  tags               = local.tags
-}
-
-resource "aws_lb_target_group" "this" {
-  name        = local.target_group_name
-  port        = var.container_port
-  protocol    = "HTTP"
-  target_type = "ip"
-  vpc_id      = aws_vpc.this.id
-
-  health_check {
-    path                = var.health_check_path
-    protocol            = "HTTP"
-    matcher             = "200-399"
-    interval            = 30
-    healthy_threshold   = 2
-    unhealthy_threshold = 5
-    timeout             = 5
-  }
-
-  tags = local.tags
-}
-
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.this.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.this.arn
-  }
-}
 
 resource "aws_ecr_repository" "this" {
   name                 = local.ecr_repository_name
@@ -345,16 +282,6 @@ resource "aws_ecs_service" "this" {
     security_groups = [aws_security_group.tasks.id]
     assign_public_ip = var.assign_public_ip
   }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.this.arn
-    container_name   = var.container_name
-    container_port   = var.container_port
-  }
-
-  health_check_grace_period_seconds = 30
-
-  depends_on = [aws_lb_listener.http]
 
   tags = local.tags
 }
