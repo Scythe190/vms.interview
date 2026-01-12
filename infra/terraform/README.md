@@ -1,6 +1,6 @@
 # Terraform layout
 
-This repo uses a small bootstrap stack to create the remote state bucket + lock table, then two environment stacks (dev/prod) that deploy the ECS Fargate service.
+This repo uses a small bootstrap stack to create the remote state bucket (and a legacy lock table), then two environment stacks (dev/prod) that deploy the ECS Fargate service.
 
 ## Bootstrap (one-time)
 
@@ -13,7 +13,7 @@ terraform apply
 
 This creates:
 - S3 bucket for Terraform state
-- DynamoDB table for state locking
+- DynamoDB table for legacy state locking (optional when using `use_lockfile`)
 
 ## Dev/Prod stacks
 
