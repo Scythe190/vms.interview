@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: "8.0.x"
+  PROJECT_PATH: "VMS.Interview/VMS.Interview.csproj"
+  DOCKERFILE_PATH: "VMS.Interview/Dockerfile"
+  IMAGE_NAME: "vms-interview"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: |
+            VMS.Interview/packages.lock.json
+            VMS.Interview/*.csproj
+
+      - name: Restore
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Build
+        run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker build (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE_PATH }}
+          push: false
+          tags: local/${{ env.IMAGE_NAME }}:ci
+          build-args: |
+            BUILD_CONFIGURATION=Release
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

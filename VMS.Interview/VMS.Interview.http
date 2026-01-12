@@ -1,0 +1,6 @@
+@VMS.Interview_HostAddress = http://localhost:5041
+
+GET {{VMS.Interview_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
